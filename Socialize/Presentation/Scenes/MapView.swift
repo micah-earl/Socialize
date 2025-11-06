@@ -7,67 +7,35 @@
 
 import SwiftUI
 import MapKit
-import CoreLocation
-import Combine
 
-/// A simple location manager to request "When In Use" authorization.
-final class LocationAuthorization: NSObject, ObservableObject, CLLocationManagerDelegate {
-    let objectWillChange = ObservableObjectPublisher()
+
+struct MapView: View {
+    let cameraPosition: MapCameraPosition = .region(.init(center: .init(latitude: 37.33, longitude: -122.009),
+                                                        latitudinalMeters: 1300, longitudinalMeters: 1300))
+    let locationManager = CLLocationManager()
     
-    private let manager = CLLocationManager()
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-
-    override init() {
-        super.init()
-        // Configure manager after super.init
-        manager.delegate = self
-        // Seed current status
-        authorizationStatus = manager.authorizationStatus
-    }
-
-    func requestWhenInUseAuthorization() {
-        // If not determined, ask for When In Use
-        if authorizationStatus == .notDetermined {
-            manager.requestWhenInUseAuthorization()
+    var body: some View {
+        Map(initialPosition: cameraPosition) {
+            // Map content
+            UserAnnotation()
+            Marker("Apple Visitor Center", systemImage: "laptopcomputer", coordinate: .appleVisitorCenter)
+            Marker("Panama Park", systemImage: "tree.fill", coordinate: .panamaPark)
+                .tint(.green)
         }
-    }
-
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        DispatchQueue.main.async {
-            self.authorizationStatus = manager.authorizationStatus
+        .onAppear {
+            locationManager.requestWhenInUseAuthorization()
+        }
+        .mapControls {
+            MapUserLocationButton()
+            MapScaleView()
         }
     }
 }
 
-struct MapView: View {
-    @State private var position = MapCameraPosition.region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-        )
-    )
-
-    @StateObject private var locationAuth = LocationAuthorization()
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Map(position: $position, interactionModes: .all) {
-                UserAnnotation()
-            }
-            .ignoresSafeArea()
-
-            // Built-in button to center/follow the user's location
-            VStack(alignment: .trailing, spacing: 8) {
-                MapUserLocationButton()
-                    .labelStyle(.iconOnly)
-                    .clipShape(Circle())
-                    .padding(12)
-            }
-        }
-        .onAppear {
-            locationAuth.requestWhenInUseAuthorization()
-        }
-    }
+extension CLLocationCoordinate2D{
+    static let appleHQ = CLLocationCoordinate2D(latitude: 37.3346, longitude: -122.0090)
+    static let appleVisitorCenter = CLLocationCoordinate2D(latitude: 37.332753, longitude: -122.005372)
+    static let panamaPark = CLLocationCoordinate2D(latitude: 37.347730, longitude: -122.018715)
 }
 
 #Preview {
