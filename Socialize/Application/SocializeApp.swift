@@ -8,6 +8,8 @@
 import SwiftUI
 import SwiftData
 
+
+
 @main
 struct SocializeApp: App {
     @State private var store = SocializeStore()
