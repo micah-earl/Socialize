@@ -38,7 +38,7 @@ extension CLLocationCoordinate2D{
     static let panamaPark = CLLocationCoordinate2D(latitude: 37.347730, longitude: -122.018715)
 }
 
+
 #Preview {
     MapView()
 }
-
