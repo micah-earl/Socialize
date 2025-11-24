@@ -7,15 +7,21 @@
 
 import Foundation
 
-struct User: Identifiable, Hashable {
+struct User: Identifiable, Hashable, Codable {
     let id: UUID
     var username: String
     var fullName: String
     var bio: String
     var followingUserIds: Set<UUID>
+    
+    enum CodingKeys: String, CodingKey {
+        case id, username, bio
+        case fullName = "full_name"
+        case followingUserIds = "following_user_ids"
+    }
 }
 
-struct Activity: Identifiable, Hashable {
+struct Activity: Identifiable, Hashable, Codable {
     let id: UUID
     let authorId: UUID
     var title: String
@@ -24,6 +30,12 @@ struct Activity: Identifiable, Hashable {
     var date: Date
     var location: String
     var likedUserIds: Set<UUID>
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, category, date, location
+        case authorId = "author_id"
+        case likedUserIds = "liked_user_ids"
+    }
 }
 
 enum SampleDataFactory {

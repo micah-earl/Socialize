@@ -39,6 +39,3 @@ extension CLLocationCoordinate2D{
 }
 
 
-#Preview {
-    MapView()
-}

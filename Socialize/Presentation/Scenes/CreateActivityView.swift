@@ -35,8 +35,15 @@ struct CreateActivityView: View {
                 }
                 Section {
                     Button {
-                        store.createActivity(title: title, description: description, category: category, date: date, location: location)
-                        clearForm()
+                        Task {
+                            do {
+                                try await store.createActivity(title: title, description: description, category: category, date: date, location: location)
+                                clearForm()
+                            } catch {
+                                // Handle error, maybe show an alert
+                                print("Error creating activity: \(error)")
+                            }
+                        }
                     } label: {
                         Text("Post Activity")
                             .frame(maxWidth: .infinity)

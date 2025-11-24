@@ -28,7 +28,11 @@ struct ActivityDetailView: View {
                         }
                         Spacer()
                         if let meId = store.currentUserId, meId != author.id {
-                            Button(action: { store.toggleFollow(userId: author.id) }) {
+                            Button(action: {
+    Task {
+        try? await store.toggleFollow(userId: author.id)
+    }
+}) {
                                 let isFollowing = store.users[meId]?.followingUserIds.contains(author.id) == true
                                 Text(isFollowing ? "Unfollow" : "Follow")
                                     .padding(.vertical, 6)

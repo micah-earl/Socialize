@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import Supabase
 
 @Observable
 final class SocializeStore {
@@ -15,19 +16,32 @@ final class SocializeStore {
 
     // Demo: current user is the first sample user
     var currentUserId: UUID?
+    
+    private let supabase = SupabaseService.shared.client
 
-    init(useSampleData: Bool = true) {
-        if useSampleData {
-            seedSampleData()
+    init() {
+        Task {
+            try? await fetchAllData()
         }
     }
 
-    private func seedSampleData() {
-        let sampleUsers = SampleDataFactory.makeUsers()
-        let sampleActivities = SampleDataFactory.makeActivities(users: sampleUsers)
-        self.users = Dictionary(uniqueKeysWithValues: sampleUsers.map { ($0.id, $0) })
-        self.activities = Dictionary(uniqueKeysWithValues: sampleActivities.map { ($0.id, $0) })
-        self.currentUserId = sampleUsers.first?.id
+    private func fetchAllData() async throws {
+        async let usersTask = fetchUsers()
+        async let activitiesTask = fetchActivities()
+        
+        let (users, activities) = try await (usersTask, activitiesTask)
+        
+        self.users = Dictionary(uniqueKeysWithValues: users.map { ($0.id, $0) })
+        self.activities = Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
+        self.currentUserId = users.first?.id
+    }
+    
+    private func fetchUsers() async throws -> [User] {
+        return try await supabase.from("users").select().execute().value
+    }
+    
+    private func fetchActivities() async throws -> [Activity] {
+        return try await supabase.from("activities").select().execute().value
     }
 
     func feedActivities() -> [Activity] {
@@ -67,7 +81,7 @@ final class SocializeStore {
         return s
     }
 
-    func toggleFollow(userId: UUID) {
+    func toggleFollow(userId: UUID) async throws {
         guard let meId = currentUserId else { return }
         guard var me = users[meId] else { return }
         if me.followingUserIds.contains(userId) {
@@ -76,9 +90,11 @@ final class SocializeStore {
             me.followingUserIds.insert(userId)
         }
         users[meId] = me
+        
+        try await supabase.from("users").update(me).eq("id", value: meId).execute()
     }
 
-    func createActivity(title: String, description: String, category: String, date: Date, location: String) {
+    func createActivity(title: String, description: String, category: String, date: Date, location: String) async throws {
         guard let meId = currentUserId else { return }
         let new = Activity(
             id: UUID(),
@@ -90,6 +106,7 @@ final class SocializeStore {
             location: location,
             likedUserIds: []
         )
+        try await supabase.from("activities").insert(new).execute()
         activities[new.id] = new
     }
 }
